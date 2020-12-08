@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "trackvac"
+version = "0.1.0"
+description = "tracking covid vaccination and testing on blockchain"
+authors = ["Andriy Shapochka <ashapochka@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+eth-brownie = "^1.12.2"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
