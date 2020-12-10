@@ -2,8 +2,6 @@ from datetime import datetime, date, timedelta
 from typing import Optional, List
 
 import brownie
-from eth_account import Account
-from eth_account.signers.local import LocalAccount
 from eth_utils import keccak
 from web3 import Web3
 
@@ -60,21 +58,21 @@ sputnikvac = Vaccine(
     code='SputnikVac'
 )
 
-municipal_vac_12_account: LocalAccount = Account.create()
 
-municipal_vac_12 = VaccinationCenter(
-    id=1234567890,
-    name='Municipal Vac #12, Nagonia',
-    address=str(municipal_vac_12_account.address)
-)
+def municipal_vac_12(address) -> VaccinationCenter:
+    return VaccinationCenter(
+        id=1234567890,
+        name='Municipal Vac #12, Nagonia',
+        address=str(address)
+    )
 
-fake_center_account: LocalAccount = Account.create()
 
-fake_center = VaccinationCenter(
-    id=666,
-    name='Fake Vaccines',
-    address=str(fake_center_account.address)
-)
+def fake_center(address) -> VaccinationCenter:
+    return VaccinationCenter(
+        id=666,
+        name='Fake Vaccines',
+        address=str(address)
+    )
 
 
 def compute_person_id(contract, person):
@@ -159,21 +157,22 @@ def test_compute_person_id(vr):
     assert len(person_id) == 32
 
 
-def test_register_center(vcr):
+def test_register_center(vcr, accounts):
     """
     any center certifying vaccinations must be officially registered
 
     :param vcr:
     :return:
     """
-    register_center(vcr, municipal_vac_12)
-    center = vcr.centers.call(municipal_vac_12.id)
-    assert center[0] is True
-    assert center[1] == municipal_vac_12.name
-    assert center[2] == municipal_vac_12.address
+    center = municipal_vac_12(accounts[1])
+    register_center(vcr, center)
+    registered_center = vcr.centers.call(center.id)
+    assert registered_center[0] is True
+    assert registered_center[1] == center.name
+    assert registered_center[2] == center.address
 
 
-def test_register_vaccination(vcr, vr):
+def test_register_vaccination(vcr, vr, accounts):
     """
     a trusted registered center can successfully register its vaccinations
 
@@ -181,11 +180,12 @@ def test_register_vaccination(vcr, vr):
     :param vr:
     :return:
     """
-    register_center(vcr, municipal_vac_12)
+    center = municipal_vac_12(accounts[1])
+    register_center(vcr, center)
     certificate = certify_vaccination(
-        vr, municipal_vac_12, jane_smith, coronavac
+        vr, center, jane_smith, coronavac
     )
-    register_certificate(vr, municipal_vac_12, certificate)
+    register_certificate(vr, center, certificate)
     assert certificate.proof
     vac = vr.vaccinations.call(certificate.proof)
     assert vac[0] is True
@@ -196,7 +196,7 @@ def test_register_vaccination(vcr, vr):
     assert vac[5] == certificate.person_id
 
 
-def test_register_vaccination_fails_center_not_registered(vr):
+def test_register_vaccination_fails_center_not_registered(vr, accounts):
     """
     fake vaccination registration fails because the fake center is not
     registered.
@@ -204,15 +204,16 @@ def test_register_vaccination_fails_center_not_registered(vr):
     :param vr:
     :return:
     """
+    center = fake_center(accounts[2])
     certificate = certify_vaccination(
-        vr, fake_center, jane_smith, coronavac
+        vr, center, jane_smith, coronavac
     )
     # noinspection PyUnresolvedReferences
     with brownie.reverts("Validated center is not registered"):
-        register_certificate(vr, fake_center, certificate)
+        register_certificate(vr, center, certificate)
 
 
-def test_register_vaccination_fails_center_address_invalid(vcr, vr):
+def test_register_vaccination_fails_center_address_invalid(vcr, vr, accounts):
     """
     tests the case, when a fake center pretends to be a valid center
     using its registration information but fails certificate registration
@@ -223,17 +224,19 @@ def test_register_vaccination_fails_center_address_invalid(vcr, vr):
     :param vr:
     :return:
     """
-    register_center(vcr, municipal_vac_12)
+    center = municipal_vac_12(accounts[1])
+    fake_address = accounts[2]
+    register_center(vcr, center)
     certificate = certify_vaccination(
-        vr, municipal_vac_12, jane_smith, coronavac
+        vr, center, jane_smith, coronavac
     )
     # noinspection PyUnresolvedReferences
     with brownie.reverts(
             "Registered center's address is different from the passed address"
     ):
         register_certificate(
-            vr, municipal_vac_12, certificate,
-            center_address=fake_center.address
+            vr, center, certificate,
+            center_address=fake_address
         )
 
 
@@ -249,7 +252,7 @@ def validate_vaccination(
 
 
 def test_validate_vaccination(vcr, var, vr, accounts):
-    vac_center = municipal_vac_12
+    vac_center = municipal_vac_12(accounts[1])
     arrival_area = 'Garivas'
     time_before_departure = timedelta(days=30)
     accepted_vaccines = [coronavac]
@@ -279,7 +282,7 @@ def test_validate_vaccination(vcr, var, vr, accounts):
 
 
 def test_validate_vaccination_fails_vaccination_old(vcr, var, vr, accounts):
-    vac_center = municipal_vac_12
+    vac_center = municipal_vac_12(accounts[1])
     arrival_area = 'Garivas'
     time_before_departure = timedelta(days=30)
     accepted_vaccines = [coronavac]
@@ -315,7 +318,7 @@ def test_validate_vaccination_fails_vaccination_old(vcr, var, vr, accounts):
 
 
 def test_validate_vaccination_fails_vaccine_denied(vcr, var, vr, accounts):
-    vac_center = municipal_vac_12
+    vac_center = municipal_vac_12(accounts[1])
     arrival_area = 'Garivas'
     time_before_departure = timedelta(days=30)
     accepted_vaccines = [coronavac]
