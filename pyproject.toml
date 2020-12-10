@@ -8,9 +8,13 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = "^3.8"
 eth-brownie = "^1.12.2"
+pydantic = "^1.7.3"
 
 [tool.poetry.dev-dependencies]
 
+[tool.pytest.ini_options]
+addopts = "--ignore=tests/tokentest/"
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
+
