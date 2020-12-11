@@ -79,10 +79,12 @@ contract VaccinationRegistry {
     function validateVaccination(
         string memory _area,
         uint256 _departureTime,
-        bytes32 _certificateProof
+        bytes32 _certificateProof,
+        bytes32 _personId
     ) public view {
         Vaccination storage record = vaccinations[_certificateProof];
         require(record.isRegistered, "Vaccination is not registered");
+        require(record.personId == _personId, "Vaccinated person mismatch is detected");
         vaccinationAcceptanceRules.validateVaccination(
             _area, _departureTime, record.timestamp,
             record.vaccineCodeType, record.vaccineCode

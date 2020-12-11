@@ -48,6 +48,13 @@ jane_smith = Person(
     nationality='Nagonia'
 )
 
+john_doe = Person(
+    full_name='John Doe',
+    passport_number='FP987654321',
+    birthdate=date.fromisoformat('1980-05-02'),
+    nationality='Nagonia'
+)
+
 coronavac = Vaccine(
     code_type='IVT',
     code='CoronaVac'
@@ -76,12 +83,12 @@ def fake_center(address) -> VaccinationCenter:
 
 
 def compute_person_id(contract, person):
-    return contract.computePersonId(
+    return Web3.toHex(contract.computePersonId(
         person.full_name,
         person.birthdate.isoformat(),
         person.passport_number,
         person.nationality
-    )
+    ))
 
 
 def certify_vaccination(
@@ -97,7 +104,7 @@ def certify_vaccination(
                           datetime.fromisoformat('2020-12-01 12:00:00')),
         vaccine=vaccine,
         person=person,
-        person_id=Web3.toHex(compute_person_id(contract, person))
+        person_id=compute_person_id(contract, person)
     )
 
 
@@ -140,6 +147,19 @@ def register_rules(
     )
 
 
+def validate_vaccination(
+        vr,
+        area: str, departure_time: datetime,
+        certificate_proof: str, person_id: str,
+        validator_address: str
+):
+    vr.validateVaccination(
+        area, int(departure_time.timestamp()),
+        certificate_proof, person_id,
+        {'from': validator_address}
+    )
+
+
 def test_register_rules(var):
     register_rules(var, 'area1', timedelta(days=30), [coronavac])
 
@@ -154,7 +174,7 @@ def test_compute_person_id(vr):
     """
     person_id = compute_person_id(vr, jane_smith)
     assert person_id
-    assert len(person_id) == 32
+    assert len(person_id) == 66
 
 
 def test_register_center(vcr, accounts):
@@ -240,17 +260,6 @@ def test_register_vaccination_fails_center_address_invalid(vcr, vr, accounts):
         )
 
 
-def validate_vaccination(
-        vr,
-        area: str, departure_time: datetime, certificate_proof: str,
-        validator_address: str
-):
-    vr.validateVaccination(
-        area, int(departure_time.timestamp()), certificate_proof,
-        {'from': validator_address}
-    )
-
-
 def test_validate_vaccination(vcr, var, vr, accounts):
     vac_center = municipal_vac_12(accounts[1])
     arrival_area = 'Garivas'
@@ -276,9 +285,74 @@ def test_validate_vaccination(vcr, var, vr, accounts):
 
     # an airport where the traveler either departs from or arrives in
     # validates the vaccination certificate presented by the traveler
+    traveler_id = compute_person_id(vr, traveler)
     validate_vaccination(
-        vr, arrival_area, departure_time, certificate.proof, airport_address
+        vr, arrival_area, departure_time,
+        certificate.proof, traveler_id,
+        airport_address
     )
+
+
+def test_validate_vaccination_fails_proof_invalid(vcr, var, vr, accounts):
+    arrival_area = 'Garivas'
+    vac_time = datetime.fromisoformat('2020-12-10 11:30')
+    departure_time = vac_time + timedelta(days=10)
+    airport_address = accounts[3]
+
+    # an airport where the traveler either departs from or arrives in
+    # validates the vaccination certificate presented by the traveler
+    # validation is failed because the certificate is not registered
+    # on the ledger
+    certificate_proof = '0x0'
+    traveler_id = '0x0'
+    # noinspection PyUnresolvedReferences
+    with brownie.reverts(
+            "Vaccination is not registered"
+    ):
+        validate_vaccination(
+            vr, arrival_area, departure_time,
+            certificate_proof, traveler_id,
+            airport_address
+        )
+
+
+def test_validate_vaccination_fails_traveler_mismatch(vcr, var, vr, accounts):
+    vac_center = municipal_vac_12(accounts[1])
+    arrival_area = 'Garivas'
+    time_before_departure = timedelta(days=30)
+    accepted_vaccines = [coronavac]
+    certified_traveler = jane_smith
+    validated_traveler = john_doe
+    vac_time = datetime.fromisoformat('2020-12-10 11:30')
+    vaccine = accepted_vaccines[0]
+    departure_time = vac_time + timedelta(days=10)
+    airport_address = accounts[3]
+
+    # register vaccination centers and validation rules as a prerequisite
+    # to scenario execution
+    register_center(vcr, vac_center)
+    register_rules(var, arrival_area, time_before_departure, accepted_vaccines)
+
+    # vaccination center vaccinates the traveler and registers
+    # traveler's vaccination certificate
+    certificate = certify_vaccination(
+        vr, vac_center, certified_traveler, vaccine, vaccination_time=vac_time
+    )
+    register_certificate(vr, vac_center, certificate)
+
+    # an airport where the traveler either departs from or arrives in
+    # validates the vaccination certificate presented by the traveler
+    # validation fails as the actual traveler mismatches certified traveler
+    traveler_id = compute_person_id(vr, validated_traveler)
+    # noinspection PyUnresolvedReferences
+    with brownie.reverts(
+            "Vaccinated person mismatch is detected"
+    ):
+        validate_vaccination(
+            vr, arrival_area, departure_time,
+            certificate.proof, traveler_id,
+            airport_address
+        )
 
 
 def test_validate_vaccination_fails_vaccination_old(vcr, var, vr, accounts):
@@ -307,17 +381,21 @@ def test_validate_vaccination_fails_vaccination_old(vcr, var, vr, accounts):
     # an airport where the traveler either departs from or arrives in
     # validates the vaccination certificate presented by the traveler
     # validation is failed because vaccination is too old
+    traveler_id = compute_person_id(vr, traveler)
     # noinspection PyUnresolvedReferences
     with brownie.reverts(
             "Vaccination time is too far in the past"
     ):
         validate_vaccination(
-            vr, arrival_area, departure_time, certificate.proof,
+            vr, arrival_area, departure_time,
+            certificate.proof, traveler_id,
             airport_address
         )
 
 
-def test_validate_vaccination_fails_vaccine_denied(vcr, var, vr, accounts):
+def test_validate_vaccination_fails_vaccine_not_accepted(
+        vcr, var, vr, accounts
+):
     vac_center = municipal_vac_12(accounts[1])
     arrival_area = 'Garivas'
     time_before_departure = timedelta(days=30)
@@ -343,11 +421,13 @@ def test_validate_vaccination_fails_vaccine_denied(vcr, var, vr, accounts):
     # an airport where the traveler either departs from or arrives in
     # validates the vaccination certificate presented by the traveler
     # validation is failed because the vaccine is not on the accepted list
+    traveler_id = compute_person_id(vr, traveler)
     # noinspection PyUnresolvedReferences
     with brownie.reverts(
             "The used vaccine is not accepted in the area"
     ):
         validate_vaccination(
-            vr, arrival_area, departure_time, certificate.proof,
+            vr, arrival_area, departure_time,
+            certificate.proof, traveler_id,
             airport_address
         )
