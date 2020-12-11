@@ -598,7 +598,7 @@ description = "Python wrapper and version management tool for the solc Solidity 
 name = "py-solc-x"
 optional = false
 python-versions = ">=3.6, <4"
-version = "1.0.1"
+version = "1.0.2"
 
 [package.dependencies]
 requests = ">=2.19.0,<3"
@@ -858,6 +858,7 @@ version = "0.10.2"
 [[package]]
 category = "main"
 description = "List processing tools and functional utilities"
+marker = "implementation_name == \"cpython\" or implementation_name == \"pypy\""
 name = "toolz"
 optional = false
 python-versions = ">=3.5"
@@ -1190,8 +1191,8 @@ py-solc-ast = [
     {file = "py_solc_ast-1.2.6-py3-none-any.whl", hash = "sha256:a9d554d4eacd71f461b348c86f533de434b3f3c8dce37a1d86cebda2c865387a"},
 ]
 py-solc-x = [
-    {file = "py-solc-x-1.0.1.tar.gz", hash = "sha256:8f1f1db63365463900178e02d78bc3ed918f7b3252f808eb002a35f84889a33a"},
-    {file = "py_solc_x-1.0.1-py3-none-any.whl", hash = "sha256:5989831d4604f939419c78447a7372a68b5e04f68db59b3b0c0d1be0696ebf01"},
+    {file = "py-solc-x-1.0.2.tar.gz", hash = "sha256:e825b1d7178c0811b95a685e37604df0afda2689ff9ecf14a625df03ea11e64a"},
+    {file = "py_solc_x-1.0.2-py3-none-any.whl", hash = "sha256:1a4b4c83d86d9d93f84b8bb233503bd4cff3df5f9bca4eb5c899f6a40b2f5498"},
 ]
 pycryptodome = [
     {file = "pycryptodome-3.9.9-cp27-cp27m-macosx_10_6_intel.whl", hash = "sha256:5598dc6c9dbfe882904e54584322893eff185b98960bbe2cdaaa20e8a437b6e5"},

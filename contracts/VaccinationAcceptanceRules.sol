@@ -1,5 +1,7 @@
 pragma solidity ^0.6.0;
 
+// SPDX-License-Identifier: MIT
+
 pragma experimental ABIEncoderV2;
 
 import "./SafeMath.sol";
