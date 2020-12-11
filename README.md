@@ -1,56 +1,25 @@
 # TrackVac
 
-A bare-bones implementation of the Ethereum [ERC-20 standard](https://eips.ethereum.org/EIPS/eip-20), written in [Solidity](https://github.com/ethereum/solidity).
-
-For [Vyper](https://github.com/vyperlang/vyper), check out [`vyper-token-mix`](https://github.com/brownie-mix/vyper-token-mix).
+A prototype of the Ethereum/Quorum smart contract application demonstrating the concept of international consortium enforcing COVID-19 vaccination rules for travelers crossing national borders and required to be vaccinated for country entrance.
 
 ## Installation
 
-1. [Install Brownie](https://eth-brownie.readthedocs.io/en/stable/install.html), if you haven't already.
+1. Make sure your Python 3 is recent (3.8+) and [install Poetry](https://python-poetry.org/docs/#installation), if you haven't already.
 
-2. Download the mix.
+2. Make sure you have Node.js and [install Ganache CLI](https://www.npmjs.com/package/ganache-cli).
+   ```bash
+   npm install -g ganache-cli
+   ```
 
-    ```bash
-    brownie bake token
-    ```
-
-## Basic Use
-
-This mix provides a [simple template](contracts/Token.sol) upon which you can build your own token, as well as unit tests providing 100% coverage for core ERC20 functionality.
-
-To interact with a deployed contract in a local environment, start by opening the console:
-
-```bash
-brownie console
-```
-
-Next, deploy a test token:
-
-```python
->>> token = Token.deploy("Test Token", "TST", 18, 1e21, {'from': accounts[0]})
-
-Transaction sent: 0x4a61edfaaa8ba55573603abd35403cf41291eca443c983f85de06e0b119da377
-  Gas price: 0.0 gwei   Gas limit: 12000000
-  Token.constructor confirmed - Block: 1   Gas used: 521513 (4.35%)
-  Token deployed at: 0xd495633B90a237de510B4375c442C0469D3C161C
-```
-
-You now have a token contract deployed, with a balance of `1e21` assigned to `accounts[0]`:
-
-```python
->>> token
-<Token Contract '0xd495633B90a237de510B4375c442C0469D3C161C'>
-
->>> token.balanceOf(accounts[0])
-1000000000000000000000
-
->>> token.transfer(accounts[1], 1e18, {'from': accounts[0]})
-Transaction sent: 0xb94b219148501a269020158320d543946a4e7b9fac294b17164252a13dce9534
-  Gas price: 0.0 gwei   Gas limit: 12000000
-  Token.transfer confirmed - Block: 2   Gas used: 51668 (0.43%)
-
-<Transaction '0xb94b219148501a269020158320d543946a4e7b9fac294b17164252a13dce9534'>
-```
+3. To install project dependencies enter its root directory and run:
+   ```bash
+   poetry install
+   ```
+   
+4. Switch to the project's virtual environment:
+   ```bash
+   poetry shell
+   ```
 
 ## Testing
 
@@ -60,18 +29,14 @@ To run the tests:
 brownie test
 ```
 
-The unit tests included in this mix are very generic and should work with any ERC20 compliant smart contract. To use them in your own project, all you must do is modify the deployment logic in the [`tests/conftest.py::token`](tests/tokentest/conftest.py) fixture.
+The unit tests included in this prototype demonstrate scenarios of registration and validation of the vaccination certificates by running the smart contracts inside Ganache.
 
 ## Resources
 
-To get started with Brownie:
-
-* Check out the other [Brownie mixes](https://github.com/brownie-mix/) that can be used as a starting point for your own contracts. They also provide example code to help you get started.
-* ["Getting Started with Brownie"](https://medium.com/@iamdefinitelyahuman/getting-started-with-brownie-part-1-9b2181f4cb99) is a good tutorial to help you familiarize yourself with Brownie.
-* For more in-depth information, read the [Brownie documentation](https://eth-brownie.readthedocs.io/en/stable/).
+* Check out the medium post [TODO](https://TODO/) describing the concepts and architecture behind this prototype.
 
 
-Any questions? Join our [Gitter](https://gitter.im/eth-brownie/community) channel to chat and share with others in the community.
+Any questions? Reach to me by submitting an issue for this repository.
 
 ## License
 
