@@ -33,7 +33,7 @@ The unit tests included in this prototype demonstrate scenarios of registration 
 
 ## Resources
 
-* Check out the medium post [TODO](https://TODO/) describing the concepts and architecture behind this prototype.
+* Check out my medium post [TrackVac — Track COVID-19 Vaccination on Blockchain](https://medium.com/techtale/trackvac-track-covid-19-vaccination-on-blockchain-bb0d492d66d4) describing the concepts and architecture behind this prototype.
 
 
 Any questions? Reach to me by submitting an issue for this repository.
